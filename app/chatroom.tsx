@@ -12,6 +12,7 @@ import {
 } from "react-native"
 import supabase from "../lib/supabase"
 import useSession from "../hooks/useSession"
+import getCurrentTimestamp from "../utils/getCurrentTimestamp"
 // import usePushNotifications from "../hooks/usePushNotifications"
 
 interface Message {
@@ -42,11 +43,18 @@ const Chatroom = () => {
     if (error) console.log(error)
     else setMessages(messages.reverse() as Message[])
   }, [])
-  console.log(messages[0].created_at, typeof messages[0].created_at)
+
   const messageReceived = useCallback(
     ({ payload }: { event: string; payload: Message }) => {
       const newMessage = payload
-      setMessages(prevMessages => [...prevMessages, newMessage])
+      setMessages(prevMessages =>
+        [...prevMessages, newMessage].sort((a, b) => {
+          const dateA = new Date(a.created_at)
+          const dateB = new Date(b.created_at)
+
+          return dateB.getTime() - dateA.getTime()
+        })
+      )
       setTimeout(() => {
         if (flatListRef.current) {
           flatListRef.current.scrollToIndex({ index: 0, animated: true })
@@ -55,7 +63,6 @@ const Chatroom = () => {
     },
     []
   )
-
   const realtimeChannelRef = useRef<any>()
 
   const realtime = useCallback(() => {
@@ -99,6 +106,7 @@ const Chatroom = () => {
         content: inputText,
         sender_id: session?.user?.id,
         group_id,
+        created_at: getCurrentTimestamp(),
       },
     })
   }
