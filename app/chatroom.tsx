@@ -1,5 +1,5 @@
-import { useGlobalSearchParams, useRouter } from "expo-router"
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import { useGlobalSearchParams, useRouter } from 'expo-router'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   View,
   Text,
@@ -9,11 +9,11 @@ import {
   Image,
   KeyboardAvoidingView,
   Alert,
-} from "react-native"
-import supabase from "../lib/supabase"
-import useSession from "../hooks/useSession"
-import getCurrentTimestamp from "../utils/getCurrentTimestamp"
-// import usePushNotifications from "../hooks/usePushNotifications"
+} from 'react-native'
+import supabase from '../lib/supabase'
+import useSession from '../hooks/useSession'
+import getCurrentTimestamp from '../utils/getCurrentTimestamp'
+//TODO import usePushNotifications from "../hooks/usePushNotifications"
 
 interface Message {
   id: string
@@ -25,10 +25,10 @@ interface Message {
 }
 
 const Chatroom = () => {
-  // const { notification } = usePushNotifications()
+  //TODO const { notification } = usePushNotifications()
   const { session } = useSession()
   const [messages, setMessages] = useState<Message[]>([])
-  const [inputText, setInputText] = useState("")
+  const [inputText, setInputText] = useState('')
   const flatListRef = useRef<FlatList>(null)
   const { id: group_id } = useGlobalSearchParams()
 
@@ -36,9 +36,9 @@ const Chatroom = () => {
 
   const getMessages = useCallback(async () => {
     const { data: messages, error } = await supabase
-      .from("message")
-      .select("*")
-      .eq("group_id", group_id)
+      .from('message')
+      .select('*')
+      .eq('group_id', group_id)
 
     if (error) console.log(error)
     else setMessages(messages.reverse() as Message[])
@@ -72,7 +72,7 @@ const Chatroom = () => {
       },
     })
     realtimeChannelRef.current
-      .on("broadcast", { event: "msg" }, messageReceived)
+      .on('broadcast', { event: 'msg' }, messageReceived)
       .subscribe()
 
     return () => {
@@ -81,26 +81,27 @@ const Chatroom = () => {
   }, [])
 
   useEffect(() => {
-    if (!group_id) return router.replace("/(tabs)/two")
+    if (!group_id || !session) return router.replace('/(tabs)/two')
+
     getMessages()
     return realtime()
-  }, [])
+  }, [group_id, session, router])
 
   const handleSendMessage = async () => {
-    if (inputText.trim() !== "") {
-      const { data, error } = await supabase
-        .from("message")
+    if (inputText.trim() !== '') {
+      const { error } = await supabase
+        .from('message')
         .insert([
           { content: inputText, sender_id: session?.user?.id, group_id },
         ])
         .select()
       if (error) Alert.alert(error.message)
-      setInputText("")
+      setInputText('')
     }
     const randomId = Math.random().toString(36).substring(7)
     realtimeChannelRef.current.send({
-      type: "broadcast",
-      event: "msg",
+      type: 'broadcast',
+      event: 'msg',
       payload: {
         id: randomId,
         content: inputText,
@@ -112,22 +113,22 @@ const Chatroom = () => {
   }
 
   const renderItem = ({ item: { content, sender_id } }: { item: Message }) => {
+    const isMe = session?.user?.id === sender_id
     return (
       <View
         style={{
-          alignItems:
-            session?.user?.id === sender_id ? "flex-start" : "flex-end",
+          alignItems: isMe ? 'flex-end' : 'flex-start',
           margin: 5,
         }}
       >
         <View
           style={{
-            backgroundColor: "#007AFF",
+            backgroundColor: isMe ? '#007AFF' : '#4CAF50',
             padding: 10,
             borderRadius: 10,
           }}
         >
-          <Text style={{ color: "#fff" }}>{content}</Text>
+          <Text style={{ color: '#fff' }}>{content}</Text>
         </View>
       </View>
     )
@@ -144,51 +145,51 @@ const Chatroom = () => {
         inverted
       />
       <KeyboardAvoidingView
-        behavior="padding"
+        behavior='padding'
         keyboardVerticalOffset={100}
         style={{
-          position: "sticky",
           bottom: 50,
-          flexDirection: "row",
-          alignItems: "center",
+          flexDirection: 'row',
+          alignItems: 'center',
           padding: 10,
+          position: 'sticky',
         }}
       >
         <TextInput
           style={{
             flex: 1,
             height: 40,
-            borderColor: "gray",
+            borderColor: 'gray',
             borderWidth: 1,
             borderRadius: 10,
             marginRight: 10,
             padding: 5,
-            color: "#fff",
+            color: '#fff',
           }}
-          placeholder="Type your message..."
+          placeholder='Type your message...'
           value={inputText}
           onChangeText={text => setInputText(text)}
         />
         <TouchableOpacity onPress={handleSendMessage}>
           <View
             style={{
-              backgroundColor: "#007AFF",
+              backgroundColor: '#007AFF',
               padding: 10,
               borderRadius: 10,
             }}
           >
-            <Text style={{ color: "#fff" }}>Send</Text>
+            <Text style={{ color: '#fff' }}>Send</Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => {}} style={{ marginLeft: 10 }}>
           <View
             style={{
-              backgroundColor: "#4CAF50",
+              backgroundColor: '#4CAF50',
               padding: 10,
               borderRadius: 10,
             }}
           >
-            <Text style={{ color: "#fff" }}>Upload Media</Text>
+            <Text style={{ color: '#fff' }}>Upload Media</Text>
           </View>
         </TouchableOpacity>
       </KeyboardAvoidingView>
