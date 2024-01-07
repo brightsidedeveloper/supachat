@@ -36,18 +36,15 @@ const Chatroom = () => {
   const router = useRouter()
 
   const { data: msgs } = useQuery(
-    supabase.from('message').select('*').eq('group_id', group_id)
-  )
-
-  const getMessages = useCallback(async () => {
-    const { data: messages, error } = await supabase
+    supabase
       .from('message')
       .select('*')
       .eq('group_id', group_id)
+      .order('created_at', { ascending: false })
+      .range(0, 20)
+  )
 
-    if (error) console.log(error)
-    else setMessages(messages.reverse() as Message[])
-  }, [])
+  useEffect(() => setMessages(msgs?.reverse() || []), [msgs])
 
   const messageReceived = useCallback(
     ({ payload }: { event: string; payload: Message }) => {
@@ -87,8 +84,6 @@ const Chatroom = () => {
 
   useEffect(() => {
     if (!group_id || !session) return router.replace('/(tabs)/two')
-
-    getMessages()
     return realtime()
   }, [group_id, session, router])
 
@@ -144,7 +139,7 @@ const Chatroom = () => {
       <FlatList
         ref={flatListRef}
         style={{ flex: 1, marginBottom: 50 }}
-        data={msgs}
+        data={messages}
         renderItem={renderItem}
         keyExtractor={(item, index) => index.toString()}
         inverted
