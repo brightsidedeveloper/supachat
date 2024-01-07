@@ -13,6 +13,7 @@ import {
 import supabase from '../lib/supabase'
 import useSession from '../hooks/useSession'
 import getCurrentTimestamp from '../utils/getCurrentTimestamp'
+import { useQuery } from '@supabase-cache-helpers/postgrest-swr'
 //TODO import usePushNotifications from "../hooks/usePushNotifications"
 
 interface Message {
@@ -33,6 +34,10 @@ const Chatroom = () => {
   const { id: group_id } = useGlobalSearchParams()
 
   const router = useRouter()
+
+  const { data: msgs } = useQuery(
+    supabase.from('message').select('*').eq('group_id', group_id)
+  )
 
   const getMessages = useCallback(async () => {
     const { data: messages, error } = await supabase
@@ -139,7 +144,7 @@ const Chatroom = () => {
       <FlatList
         ref={flatListRef}
         style={{ flex: 1, marginBottom: 50 }}
-        data={messages}
+        data={msgs}
         renderItem={renderItem}
         keyExtractor={(item, index) => index.toString()}
         inverted
