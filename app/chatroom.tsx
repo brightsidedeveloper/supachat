@@ -40,7 +40,7 @@ const Chatroom = () => {
       .from('message')
       .select('*')
       .eq('group_id', group_id)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: true })
       .range(0, 20)
   )
 
